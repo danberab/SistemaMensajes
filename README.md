@@ -1,6 +1,10 @@
 # SistemaMensajes
 Sistema notificador de mensajes con arduino e interfaz de java
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 94cdeb3becd7d419e039bb0a367e1f63cb8b33a7
 El sistema consta de:
 
 * Sensor de temperatura
@@ -13,5 +17,8 @@ El sistema consta de:
 
 *************************************************************
 **La conexion se puede visualizar en las imagenes adjuntas.
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 94cdeb3becd7d419e039bb0a367e1f63cb8b33a7
