@@ -26,19 +26,35 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.table.DefaultTableModel;
 
+import com.panamahitek.ArduinoException;
+import com.panamahitek.PanamaHitek_Arduino;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jssc.SerialPortException;
+
 public class GUI_Arduino extends JFrame {
     int num, resultado;
     String ayuda;
     JLabel lblAgregarMsj, lblResultado, lblRespuesta;
     JTextField txtMensaje;
-    JButton btnAgregarMsj, btnSalir,btnLuz,btnTemp,btnHum,btnBorrarRegistro;
+    JButton btnAgregarMsj, btnSalir,btnLuz,btnTemp,btnHum,btnBorrarRegistro,btnHora;
     ArrayList<String> mensajes=new ArrayList<>();
-    ImageIcon imgLuz= new ImageIcon("luz.png");
+    ImageIcon imgLuz= new ImageIcon("luz2.png");
     ImageIcon imgHum = new ImageIcon("humedad.jpg");
     ImageIcon imgTemp = new ImageIcon("images.png");
+    ImageIcon imgHora = new ImageIcon("reloj.jpg");
+    
+    PanamaHitek_Arduino ino = new PanamaHitek_Arduino();
+    String msg;
+
 
     public GUI_Arduino() {
+        
         super("Sistema notificador de mensajes en arduino");
+
+        setLocationRelativeTo(null);
         setLayout(new FlowLayout());
         lblAgregarMsj = new JLabel("Nuevo mensaje: ");
         lblRespuesta = new JLabel();
@@ -47,6 +63,7 @@ public class GUI_Arduino extends JFrame {
         btnLuz = new JButton(imgLuz);
         btnHum = new JButton(imgHum);
         btnTemp = new JButton(imgTemp);
+        btnHora=new JButton(imgHora);
         btnAgregarMsj.setMnemonic('C');
         btnAgregarMsj.setToolTipText("Alt+c--Proceso para calcular el factorial "+
                 "del numero ingresado");
@@ -63,6 +80,7 @@ btnBorrarRegistro = new JButton("Borrar");
         add(btnLuz);
         add(btnTemp);
         add(btnHum);
+        add(btnHora);
         
         String columnas[] = {"Historial de mensajes"};
         String datos[][] = {{""}};
@@ -75,15 +93,29 @@ btnBorrarRegistro = new JButton("Borrar");
          JScrollPane scroll = new JScrollPane(tabla);
         getContentPane().add(scroll, BorderLayout.CENTER);
         
+         try {
+            //Se inicia la comunicación con el Puerto Serie
+            ino.arduinoTX("COM4", 9600);
+        } catch (ArduinoException ex) {
+            Logger.getLogger(ArduinoGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         btnAgregarMsj.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 
-                JOptionPane.showMessageDialog(null,"El mensaje fue enviado");
                 String texto= txtMensaje.getText();
                 mensajes.add(texto);
-                JOptionPane.showMessageDialog(null,"El mensaje se agrego: "+mensajes.get(0));
                 txtMensaje.setText("");
+                msg=texto;
+                try {
+                
+                     ino.sendData(""+ msg);
+                } catch (ArduinoException | SerialPortException ex) {
+                    Logger.getLogger(ArduinoGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                               
+                
             }
         });
         
@@ -130,6 +162,72 @@ btnBorrarRegistro = new JButton("Borrar");
             }
         });
         
+        //Boton de hora
+        btnHora.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Calendar c = new GregorianCalendar();
+                int hora = c.get(Calendar.HOUR_OF_DAY);
+                int segu = c.get(Calendar.SECOND);
+                int mint = c.get(Calendar.MINUTE);
+                if(hora > 12){
+                    hora= hora- 12;
+                }
+                msg = hora + ":" + mint + ":" + segu + " ";
+                try {
+
+                    //manda el mensaje de la hora del sistema btenida anteriormente
+                    ino.sendData("5");
+
+                     ino.sendData("Hora: "+msg);
+                } catch (ArduinoException | SerialPortException ex) {
+                    Logger.getLogger(ArduinoGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        
+        //Temperatura
+        btnTemp.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                              
+                try {
+
+                     ino.sendData("2");
+                } catch (ArduinoException | SerialPortException ex) {
+                    Logger.getLogger(ArduinoGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        
+        //Luminosidad
+        btnLuz.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                              
+                try {
+
+                     ino.sendData("3");
+                } catch (ArduinoException | SerialPortException ex) {
+                    Logger.getLogger(ArduinoGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        
+        //Humedad
+        btnHum.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                              
+                try {
+
+                     ino.sendData("4");
+                } catch (ArduinoException | SerialPortException ex) {
+                    Logger.getLogger(ArduinoGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        
         
         btnSalir.addActionListener(new ActionListener() {
             @Override
@@ -137,25 +235,11 @@ btnBorrarRegistro = new JButton("Borrar");
                 System.exit(0);
             }
         });
-        txtMensaje.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int resultado;
-                resultado = factorial(Integer.parseInt(txtMensaje.getText()));
-                lblRespuesta.setText("El factorial del numero ingresado es: " 
-                        + resultado);
-            }
-        });
+       
         Manejadora objManejador = new Manejadora();
         txtMensaje.addKeyListener(objManejador);
     }
-    public int factorial(int num) {
-        if (num > 1) {
-            return num * factorial(num - 1);
-        } else {
-            return 1;
-        }
-    }
+
 
     
     public class Manejadora implements KeyListener {
